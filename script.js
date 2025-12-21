@@ -1,113 +1,81 @@
-// ====== Mobile nav toggle ======
+// ===== MOBILE MENU =====
 const menuToggle = document.querySelector('.menu-toggle');
 const nav = document.querySelector('.nav');
 
-if (menuToggle && nav) {
-  menuToggle.addEventListener('click', () => {
-    const isOpen = nav.classList.toggle('active');
-    menuToggle.setAttribute('aria-expanded', String(isOpen));
-  });
-}
-
-// ====== Smooth scroll for CTA anchors ======
-document.querySelectorAll('a[href^="#"]').forEach((link) => {
-  link.addEventListener('click', (e) => {
-    const targetId = link.getAttribute('href').substring(1);
-    const target = document.getElementById(targetId);
-    if (target) {
-      e.preventDefault();
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      // Close mobile nav on selection
-      nav?.classList.remove('active');
-      menuToggle?.setAttribute('aria-expanded', 'false');
-    }
-  });
+menuToggle?.addEventListener('click', () => {
+  nav.classList.toggle('active');
+  menuToggle.setAttribute(
+    'aria-expanded',
+    nav.classList.contains('active')
+  );
 });
 
-// ====== Contact form (client-side status only) ======
-const contactForm = document.getElementById('contactForm');
-const contactStatus = document.getElementById('contactStatus');
+// ===== SMOOTH SCROLL =====
+document.querySelectorAll('a[href^="#"]').forEach(link => {
+  link.addEventListener('click', e => {
+    const id = link.getAttribute('href');
+    const target = document.querySelector(id);
 
-if (contactForm && contactStatus) {
-  contactForm.addEventListener('submit', (e) => {
+    if (!target) return;
+
     e.preventDefault();
-    // simple validation
-    const name = document.getElementById('contactName').value.trim();
-    const email = document.getElementById('contactEmail').value.trim();
-    const msg = document.getElementById('contactMessage').value.trim();
 
-    if (!name || !email || !msg) {
-      contactStatus.textContent = 'Please fill out all fields.';
-      contactStatus.style.color = '#c9a227';
-      return;
-    }
-    contactStatus.textContent = 'Thanks! We\'ll get back to you shortly.';
-    contactStatus.style.color = '#9a9a9a';
-    contactForm.reset();
+    const offset = 90;
+    const y =
+      target.getBoundingClientRect().top +
+      window.pageYOffset -
+      offset;
+
+    window.scrollTo({ top: y, behavior: 'smooth' });
+
+    nav.classList.remove('active');
+    menuToggle?.setAttribute('aria-expanded', 'false');
   });
-}
+});
 
-// ====== Chatbot ======
+// ===== CHATBOT =====
 const chatbot = document.getElementById('chatbot');
-const openChatBtn = document.getElementById('openChat');
-const closeChatBtn = document.getElementById('closeChat');
+const openChat = document.getElementById('openChat');
+const closeChat = document.getElementById('closeChat');
 const sendBtn = document.getElementById('sendMessage');
+const input = document.getElementById('userMessage');
 const chatContent = document.getElementById('chatContent');
-const userMessageInput = document.getElementById('userMessage');
 
-const openChat = () => {
-  if (!chatbot) return;
-  chatbot.hidden = false;
-  userMessageInput?.focus();
-};
-const closeChat = () => {
-  if (!chatbot) return;
-  chatbot.hidden = true;
-};
+openChat?.addEventListener('click', () => {
+  chatbot.style.display = 'flex';
+  input.focus();
+});
 
-openChatBtn?.addEventListener('click', openChat);
-closeChatBtn?.addEventListener('click', closeChat);
+closeChat?.addEventListener('click', () => {
+  chatbot.style.display = 'none';
+});
 
-sendBtn?.addEventListener('click', () => {
-  const text = userMessageInput.value.trim();
+sendBtn?.addEventListener('click', sendMessage);
+input?.addEventListener('keydown', e => {
+  if (e.key === 'Enter') sendMessage();
+});
+
+function sendMessage() {
+  const text = input.value.trim();
   if (!text) return;
-  appendUser(text);
-  userMessageInput.value = '';
-  setTimeout(() => appendBot(autoReply(text)), 500);
-});
 
-userMessageInput?.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    sendBtn.click();
-  }
-});
+  appendMsg('user-msg', text);
+  input.value = '';
 
-function appendUser(text) {
+  setTimeout(() => {
+    appendMsg('bot-msg', 'Thanks! We will respond shortly.');
+  }, 500);
+}
+
+function appendMsg(cls, text) {
   const div = document.createElement('div');
-  div.className = 'user-msg';
+  div.className = cls;
   div.textContent = text;
   chatContent.appendChild(div);
   chatContent.scrollTop = chatContent.scrollHeight;
 }
 
-function appendBot(text) {
-  const div = document.createElement('div');
-  div.className = 'bot-msg';
-  div.textContent = text;
-  chatContent.appendChild(div);
-  chatContent.scrollTop = chatContent.scrollHeight;
-}
-
-function autoReply(text) {
-  const t = text.toLowerCase();
-  if (t.includes('price') || t.includes('cost') || t.includes('rate')) {
-    return 'Share your service type, scope, and timeline — we\'ll quote within 24h.';
-  }
-  if (t.includes('time') || t.includes('timeline') || t.includes('delivery')) {
-    return 'Typical delivery is 2–7 days depending on scope. Rush options available.';
-  }
-  if (t.includes('service') || t.includes('services')) {
-    return 'We offer design, editing, web/app UI, and pro shoots. What do you need?';
-  }
-  return 'Got it. We\'ll guide you — feel free to share more details.';
-}
+// ESC to close chatbot
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') chatbot.style.display = 'none';
+});
